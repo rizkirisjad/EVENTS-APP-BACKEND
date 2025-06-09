@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String
+  role     UserRole @default(PARTICIPANT)
+
+  referralCode   String  @unique
+  referredBy     String?
+  referredByUser User?   @relation("Referrer", fields: [referredBy], references: [id])
+  referrals      User[]  @relation("Referrer")
+
+  points        Point[]
+  createdEvents Event[]       @relation("Organizer")
+  transactions  Transaction[]
+
+  createdAt DateTime @default(now())
+
+  referralUsagesGiven    ReferralUsage[] @relation("ReferrerUser")
+  referralUsagesReceived ReferralUsage[] @relation("ReferredUser")
+}
+
+model Event {
+  id             String       @id @default(uuid())
+  title          String
+  description    String
+  date           DateTime
+  time           String
+  location       String
+  category       String
+  imageUrl       String?
+  price          Int // Dalam IDR
+  isFree         Boolean      @default(false)
+  availableSeats Int
+  ticketTypes    TicketType[] // Optional if multi ticket type
+  organizerId    String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  transactions Transaction[]
+  promotions   Promotion[]
+
+  User User[] @relation("Organizer")
+}
+
+model TicketType {
+  id      String @id @default(uuid())
+  name    String
+  price   Int
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  Transaction Transaction[]
+}
+
+model Transaction {
+  id           String      @id @default(uuid())
+  event        Event       @relation(fields: [eventId], references: [id])
+  eventId      String
+  ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id])
+  ticketTypeId String?
+  userEmail    String // Belum pakai User table (untuk MVP)
+  quantity     Int
+  totalPaid    Int // Harga akhir setelah diskon
+  promoCode    String? // Kode promo yang dipakai (jika ada)
+  referralCode String? // Referral yang dipakai
+  createdAt    DateTime    @default(now())
+
+  User User[]
+}
+
+model Promotion {
+  id           String        @id @default(uuid())
+  event        Event         @relation(fields: [eventId], references: [id])
+  eventId      String
+  code         String        @unique
+  type         PromotionType // "REFERRAL" | "TIME_BASED"
+  discountIDR  Int? // Potongan tetap (misal 20000)
+  discountPct  Int? // Persen (misal 10 = 10%)
+  maxUsage     Int?
+  currentUsage Int           @default(0)
+  expiresAt    DateTime
+  createdAt    DateTime      @default(now())
+}
+
+model Point {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  amount    Int // Dalam IDR
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model ReferralUsage {
+  id String @id @default(uuid())
+
+  referrer   User   @relation("ReferrerUser", fields: [referrerId], references: [id])
+  referrerId String
+
+  referredUser   User   @relation("ReferredUser", fields: [referredUserId], references: [id])
+  referredUserId String
+
+  usedAt DateTime @default(now())
+}
+
+enum UserRole {
+  PARTICIPANT
+  ORGANIZER
+}
+
+enum PromotionType {
+  REFERRAL
+  TIME_BASED
+}
