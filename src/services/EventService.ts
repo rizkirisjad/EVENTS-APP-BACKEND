@@ -1,4 +1,4 @@
-import { Prisma } from "../generated/prisma";
+import { Prisma } from "prisma/generated/client";
 import prisma from "../utils/prisma";
 
 interface GetEventsParams {
