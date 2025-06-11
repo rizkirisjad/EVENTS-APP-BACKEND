@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventRoutes = void 0;
+exports.TransactionRoutes = void 0;
 const express_1 = require("express");
 const TransactionController_1 = require("src/controllers/TransactionController");
-class EventRoutes {
+class TransactionRoutes {
     constructor() {
         this.router = (0, express_1.Router)();
         this.transactionController = new TransactionController_1.TransactionController();
@@ -16,4 +16,4 @@ class EventRoutes {
         return this.router;
     }
 }
-exports.EventRoutes = EventRoutes;
+exports.TransactionRoutes = TransactionRoutes;

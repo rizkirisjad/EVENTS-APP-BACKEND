@@ -7,11 +7,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { EventRoutes } from "./routes/EventRoutes";
+import { TransactionRoutes } from "./routes/TransactionRoutes";
 
 const PORT: string | number = process.env.PORT || 8000;
 
 const app: Application = express();
 const eventRoutes = new EventRoutes();
+const transactionRoutes = new TransactionRoutes();
 
 app.use(express.json());
 app.use(cors());
@@ -23,6 +25,7 @@ app.get("/api", (req: Request, res: Response) => {
 });
 
 app.use("/api/v1/events", eventRoutes.getRouter());
+app.use("/api/v1/transactions", transactionRoutes.getRouter());
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

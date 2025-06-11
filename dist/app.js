@@ -10,9 +10,11 @@ const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const EventRoutes_1 = require("./routes/EventRoutes");
+const TransactionRoutes_1 = require("./routes/TransactionRoutes");
 const PORT = process.env.PORT || 8000;
 const app = (0, express_1.default)();
 const eventRoutes = new EventRoutes_1.EventRoutes();
+const transactionRoutes = new TransactionRoutes_1.TransactionRoutes();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 app.use((0, helmet_1.default)()); // helmet is a security middleware that helps protect your app from common vulnerabilities by setting various HTTP headers.
@@ -21,6 +23,7 @@ app.get("/api", (req, res) => {
     res.status(200).send({ message: "Event Management API is running" });
 });
 app.use("/api/v1/events", eventRoutes.getRouter());
+app.use("/api/v1/transactions", transactionRoutes.getRouter());
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
 });

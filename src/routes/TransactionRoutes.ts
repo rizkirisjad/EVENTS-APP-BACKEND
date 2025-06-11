@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { TransactionController } from "src/controllers/TransactionController";
 
-export class EventRoutes {
+export class TransactionRoutes {
   private router: Router;
   private transactionController: TransactionController;
 
