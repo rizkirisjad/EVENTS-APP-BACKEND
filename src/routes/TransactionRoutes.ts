@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { TransactionController } from "src/controllers/TransactionController";
+import { TransactionController } from "../controllers/TransactionController";
 
 export class TransactionRoutes {
   private router: Router;
