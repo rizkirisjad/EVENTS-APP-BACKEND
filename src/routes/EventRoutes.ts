@@ -1,4 +1,3 @@
-// src/routes/EventRoutes.ts
 import { Router } from "express";
 import { EventController } from "../controllers/EventController";
 

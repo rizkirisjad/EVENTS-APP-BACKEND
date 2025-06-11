@@ -2,16 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventRoutes = void 0;
 const express_1 = require("express");
-const EventController_1 = require("../controllers/EventController");
+const TransactionController_1 = require("src/controllers/TransactionController");
 class EventRoutes {
     constructor() {
         this.router = (0, express_1.Router)();
-        this.eventController = new EventController_1.EventController();
+        this.transactionController = new TransactionController_1.TransactionController();
         this.routes();
     }
     routes() {
-        this.router.get("/", this.eventController.getEvents);
-        this.router.get("/:id", this.eventController.getEventById);
+        this.router.post("/", this.transactionController.createTransaction);
     }
     getRouter() {
         return this.router;
