@@ -46,6 +46,36 @@ class EventController {
                 }
             }
         });
+        this.createEvent = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.user.id;
+                const event = yield this.eventService.createEvent(userId, req.body);
+                res.status(201).json(event);
+            }
+            catch (err) {
+                res.status(400).json({ error: err.message });
+            }
+        });
+        this.updateEvent = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.user.id;
+                const updated = yield this.eventService.updateEvent(req.params.id, userId, req.body);
+                res.json(updated);
+            }
+            catch (err) {
+                res.status(403).json({ error: err.message });
+            }
+        });
+        this.deleteEvent = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.user.id;
+                const deleted = yield this.eventService.deleteEvent(req.params.id, userId);
+                res.json(deleted);
+            }
+            catch (err) {
+                res.status(403).json({ error: err.message });
+            }
+        });
         this.eventService = new EventService_1.EventService();
     }
 }

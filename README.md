@@ -1,54 +1,110 @@
 # ✨ Events App Backend
 
-Sistem backend untuk aplikasi manajemen event, menyediakan API untuk pencarian event, detail event, dan transaksi tiket. Dibangun dengan Node.js, Express, dan Prisma ORM.
+<div align="center">
 
----
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 
-## 🚀 Fitur Utama
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
 
-- **Cari Event** berdasarkan judul, kategori, lokasi, dan filter lainnya
-- **Detail Event** lengkap beserta tipe tiket
-- **Transaksi Tiket** dengan dukungan promo & referral
-- **Manajemen kursi & diskon otomatis**
-- **Keamanan** dengan Helmet, CORS, dan logging
+</div>
 
----
+## 📝 Description
 
-## 🛠️ Teknologi
+Backend system for an event management application that provides APIs for event search, event details, and ticket transactions. Built with modern technologies for optimal performance and scalability.
 
-- **Node.js** + **Express**
-- **Prisma ORM** (PostgreSQL)
-- **TypeScript**
-- **Vercel** (deployment ready)
-- **Helmet, Morgan, CORS**
+## ✨ Key Features
 
----
+<table>
+<tr>
+<td width="50%">
 
-## 📦 Instalasi
+### 🔍 Event Search
+- Search by title, category, location
+- Flexible filtering and sorting
+- Pagination for optimal performance
+
+### 🎫 Ticket Management
+- Multi-type ticket system
+- Automatic seat management
+- Promo & referral support
+
+</td>
+<td width="50%">
+
+### 🔒 Security
+- Helmet protection
+- CORS enabled
+- Request logging with Morgan
+- Rate limiting
+
+### 📊 Monitoring
+- Error tracking
+- Performance monitoring
+- Request logging
+
+</td>
+</tr>
+</table>
+
+## 🛠️ Tech Stack
+
+- **Backend Framework:** Node.js + Express
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Language:** TypeScript
+- **Deployment:** Vercel
+- **Security:** Helmet, CORS, Morgan
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v16+)
+- PostgreSQL
+- npm or yarn
+
+### Installation
 
 ```bash
+# Clone repository
 git clone https://github.com/username/events-app-backend.git
+
+# Navigate to directory
 cd events-app-backend
+
+# Install dependencies
 npm install
-cp .env.example .env # lalu isi variabel environment
+
+# Setup environment
+cp .env.example .env
+# Edit .env as needed
+
+# Generate Prisma client
 npx prisma generate
+
+# Run development server
 npm run dev
 ```
 
----
+## 📚 API Documentation
 
-## 🌐 API Endpoints
+### Events
 
-### 1. **GET /api/v1/events**
+#### GET /api/v1/events
+List events with filtering & pagination.
 
-List event dengan filter & pagination.
-
-**Query Params:**
-- `q` (string, opsional): Pencarian judul/deskripsi
-- `category` (string, opsional): Filter kategori
-- `location` (string, opsional): Filter lokasi
-- `page` (number, default: 1)
-- `limit` (number, default: 10)
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| q | string | No | Search by title/description |
+| category | string | No | Filter by category |
+| location | string | No | Filter by location |
+| page | number | No | Page number (default: 1) |
+| limit | number | No | Items per page (default: 10) |
 
 **Response:**
 ```json
@@ -82,109 +138,84 @@ List event dengan filter & pagination.
 }
 ```
 
----
+### Transactions
 
-### 2. **GET /api/v1/events/:id**
-
-Detail event beserta tipe tiket.
-
-**Response:**
-```json
-{
-  "id": "string",
-  "title": "string",
-  "description": "string",
-  "date": "ISODate",
-  "time": "string",
-  "location": "string",
-  "category": "string",
-  "imageUrl": "string",
-  "price": 0,
-  "isFree": false,
-  "availableSeats": 100,
-  "ticketTypes": [
-    {
-      "id": "string",
-      "name": "string",
-      "price": 0
-    }
-  ]
-}
-```
-
----
-
-### 3. **POST /api/v1/transactions**
-
-Buat transaksi pembelian tiket.
+#### POST /api/v1/transactions
+Create a ticket purchase transaction.
 
 **Request Body:**
 ```json
 {
   "eventId": "string",
-  "ticketTypeId": "string (opsional)",
+  "ticketTypeId": "string",
   "userEmail": "string",
   "quantity": 2,
-  "promoCode": "string (opsional)",
-  "referralCode": "string (opsional)"
+  "promoCode": "string",
+  "referralCode": "string"
 }
 ```
 
-**Response Sukses:**
-```json
-{
-  "message": "Transaction success",
-  "transactionId": "string",
-  "totalPaid": 180000
+## 📦 Database Schema
+
+```prisma
+model Event {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  date          DateTime
+  time          String
+  location      String
+  category      String
+  price         Float
+  isFree        Boolean
+  availableSeats Int
+  ticketTypes   TicketType[]
+  transactions  Transaction[]
+}
+
+model TicketType {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  eventId       String
+  ticketTypeId  String
+  userEmail     String
+  quantity      Int
+  totalPaid     Float
+  promoCode     String?
+  referralCode  String?
+  event         Event    @relation(fields: [eventId], references: [id])
 }
 ```
 
-**Response Error:**  
-- 400: Not enough seats, promo/referral invalid, dsb.
+## 🤝 Contributing
+
+Contributions are always welcome! Here's how:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## 📞 Contact
+
+Your Name - [@twitter_handle](https://twitter.com/twitter_handle)
+
+Project Link: [https://github.com/username/events-app-backend](https://github.com/username/events-app-backend)
 
 ---
 
-## 🗄️ Struktur Database (Prisma)
-
-- **Event**: id, title, description, date, time, location, category, price, isFree, availableSeats, ticketTypes[]
-- **TicketType**: id, name, price, eventId
-- **Transaction**: id, eventId, ticketTypeId, userEmail, quantity, totalPaid, promoCode, referralCode
-- **Promotion**: id, eventId, code, discountIDR, discountPct, maxUsage, expiresAt
-- **User**: id, email, name, referralCode, etc.
-
----
-
-## 🔒 Keamanan
-
-- Semua endpoint sudah CORS enabled
-- Helmet untuk proteksi header
-- Logging request dengan Morgan
-
----
-
-## 🛠️ Deployment
-
-- Siap deploy di Vercel (lihat `vercel.json`)
-- Pastikan variabel environment sudah di-setup
-
----
-
-## 📬 Kontribusi
-
-Pull request & issue sangat terbuka!  
-Pastikan code sudah terlinting & tested.
-
----
-
-## 📄 Lisensi
-
-MIT
-
----
-
-**Tips Styling:**  
-- Gunakan badge (misal: build, license, deploy) di bagian atas
-- Gunakan emoji untuk section
-- Gunakan code block untuk contoh request/response
-- Tabel jika ada banyak field
-- Link ke dokumentasi Prisma jika ingin detail skema 
+<div align="center">
+Made with ❤️ by [Your Name]
+</div> 

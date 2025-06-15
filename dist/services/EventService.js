@@ -66,5 +66,31 @@ class EventService {
             return event;
         });
     }
+    createEvent(userId, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return prisma_1.default.event.create({
+                data: Object.assign(Object.assign({}, data), { organizerId: userId }),
+            });
+        });
+    }
+    updateEvent(id, userId, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const event = yield prisma_1.default.event.findUnique({ where: { id: id } });
+            if ((event === null || event === void 0 ? void 0 : event.organizerId) !== userId)
+                throw new Error("Unauthorized");
+            return prisma_1.default.event.update({
+                where: { id: id },
+                data,
+            });
+        });
+    }
+    deleteEvent(id, userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const event = yield prisma_1.default.event.findUnique({ where: { id: id } });
+            if ((event === null || event === void 0 ? void 0 : event.organizerId) !== userId)
+                throw new Error("Unauthorized");
+            return prisma_1.default.event.delete({ where: { id: id } });
+        });
+    }
 }
 exports.EventService = EventService;

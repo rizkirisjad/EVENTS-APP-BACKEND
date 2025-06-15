@@ -43,4 +43,41 @@ export class EventController {
       }
     }
   };
+
+  createEvent = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const event = await this.eventService.createEvent(userId, req.body);
+      res.status(201).json(event);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  };
+
+  updateEvent = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const updated = await this.eventService.updateEvent(
+        req.params.id,
+        userId,
+        req.body
+      );
+      res.json(updated);
+    } catch (err: any) {
+      res.status(403).json({ error: err.message });
+    }
+  };
+
+  deleteEvent = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const deleted = await this.eventService.deleteEvent(
+        req.params.id,
+        userId
+      );
+      res.json(deleted);
+    } catch (err: any) {
+      res.status(403).json({ error: err.message });
+    }
+  };
 }

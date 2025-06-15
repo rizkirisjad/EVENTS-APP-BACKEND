@@ -20,79 +20,58 @@ export class TransactionService {
       referralCode,
     } = input;
 
-    return await prisma.$transaction(async (tx) => {
-      const event = await tx.event.findUnique({ where: { id: eventId } });
-      if (!event) throw new Error("Event not found");
+    // --- STEP 1: Pre-validation & prepare data ---
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) throw new Error("Event not found");
+    if (event.availableSeats < quantity) throw new Error("Not enough seats");
 
-      if (event.availableSeats < quantity) {
-        throw new Error("Not enough seats available");
+    let unitPrice = event.price;
+    if (!event.isFree && ticketTypeId) {
+      const ticket = await prisma.ticketType.findUnique({
+        where: { id: ticketTypeId },
+      });
+      if (!ticket) throw new Error("Invalid ticket type");
+      unitPrice = ticket.price;
+    }
+
+    let total = unitPrice * quantity;
+
+    let promo = null;
+    if (promoCode) {
+      promo = await prisma.promotion.findUnique({ where: { code: promoCode } });
+      if (!promo || new Date(promo.expiresAt) < new Date()) {
+        throw new Error("Invalid or expired promo code");
+      }
+      if (promo.maxUsage && promo.currentUsage >= promo.maxUsage) {
+        throw new Error("Promo usage limit reached");
       }
 
-      let unitPrice = 0;
-
-      // Tentukan harga per tiket
-      if (!event.isFree) {
-        if (ticketTypeId) {
-          const ticket = await tx.ticketType.findUnique({
-            where: { id: ticketTypeId },
-          });
-          if (!ticket) throw new Error("Invalid ticket type");
-          unitPrice = ticket.price;
-        } else {
-          unitPrice = event.price;
-        }
+      // Apply discount
+      if (promo.discountIDR) total -= promo.discountIDR;
+      else if (promo.discountPct) {
+        total -= Math.floor((promo.discountPct / 100) * total);
       }
+    }
 
-      let total = unitPrice * quantity;
+    let referrerId: string | null = null;
+    let referredUserId: string | null = null;
+    if (referralCode) {
+      const referrer = await prisma.user.findUnique({
+        where: { referralCode },
+      });
+      const referred = await prisma.user.findUnique({
+        where: { email: userEmail },
+      });
 
-      // Cek promo
-      if (promoCode) {
-        const promo = await tx.promotion.findUnique({
-          where: { code: promoCode },
-        });
-
-        if (!promo || new Date(promo.expiresAt) < new Date()) {
-          throw new Error("Invalid or expired promo code");
-        }
-
-        if (promo.maxUsage && promo.currentUsage >= promo.maxUsage) {
-          throw new Error("Promo usage limit reached");
-        }
-
-        // Hitung diskon
-        if (promo.discountIDR) {
-          total -= promo.discountIDR;
-        } else if (promo.discountPct) {
-          total -= Math.floor((promo.discountPct / 100) * total);
-        }
-
-        // Naikkan usage promo
-        await tx.promotion.update({
-          where: { code: promoCode },
-          data: { currentUsage: { increment: 1 } },
-        });
+      if (referrer && referred) {
+        referrerId = referrer.id;
+        referredUserId = referred.id;
+        total -= Math.floor(0.1 * total); // Apply referral discount
       }
+    }
 
-      // Cek referral
-      if (referralCode) {
-        const referrer = await tx.user.findUnique({ where: { referralCode } });
-        const referredUser = await tx.user.findUnique({
-          where: { email: userEmail },
-        });
-
-        if (referrer && referredUser) {
-          await tx.referralUsage.create({
-            data: {
-              referrerId: referrer.id,
-              referredUserId: referredUser.id,
-            },
-          });
-
-          // Diskon 10% untuk pengguna referral
-          total -= Math.floor(total * 0.1);
-        }
-      }
-
+    // --- STEP 2: Transaction ---
+    const result = await prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.create({
         data: {
           eventId,
@@ -105,7 +84,6 @@ export class TransactionService {
         },
       });
 
-      // Update available seats
       await tx.event.update({
         where: { id: eventId },
         data: {
@@ -113,10 +91,28 @@ export class TransactionService {
         },
       });
 
+      if (promo) {
+        await tx.promotion.update({
+          where: { code: promoCode },
+          data: { currentUsage: { increment: 1 } },
+        });
+      }
+
+      if (referrerId && referredUserId) {
+        await tx.referralUsage.create({
+          data: {
+            referrerId,
+            referredUserId,
+          },
+        });
+      }
+
       return {
         transactionId: transaction.id,
         totalPaid: total,
       };
     });
+
+    return result;
   }
 }

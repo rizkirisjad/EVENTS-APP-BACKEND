@@ -63,4 +63,30 @@ export class EventService {
 
     return event;
   }
+
+  async createEvent(userId: string, data: any) {
+    return prisma.event.create({
+      data: {
+        ...data,
+        organizerId: userId,
+      },
+    });
+  }
+
+  async updateEvent(id: string, userId: string, data: any) {
+    const event = await prisma.event.findUnique({ where: { id: id } });
+    if (event?.organizerId !== userId) throw new Error("Unauthorized");
+
+    return prisma.event.update({
+      where: { id: id },
+      data,
+    });
+  }
+
+  async deleteEvent(id: string, userId: string) {
+    const event = await prisma.event.findUnique({ where: { id: id } });
+    if (event?.organizerId !== userId) throw new Error("Unauthorized");
+
+    return prisma.event.delete({ where: { id: id } });
+  }
 }

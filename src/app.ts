@@ -8,12 +8,20 @@ dotenv.config();
 
 import { EventRoutes } from "./routes/EventRoutes";
 import { TransactionRoutes } from "./routes/TransactionRoutes";
+import { AuthRoutes } from "./routes/AuthRoutes";
+import { UserRoutes } from "./routes/UserRoutes";
+import { PromotionRoutes } from "./routes/PromotionRoutes";
+import { ReferralRoutes } from "./routes/ReferralRoutes";
 
 const PORT: string | number = process.env.PORT || 8000;
 
 const app: Application = express();
 const eventRoutes = new EventRoutes();
 const transactionRoutes = new TransactionRoutes();
+const authRoutes = new AuthRoutes();
+const userRoutes = new UserRoutes();
+const promotionRoutes = new PromotionRoutes();
+const referralRoutes = new ReferralRoutes();
 
 app.use(express.json());
 app.use(cors());
@@ -26,6 +34,10 @@ app.get("/api", (req: Request, res: Response) => {
 
 app.use("/api/v1/events", eventRoutes.getRouter());
 app.use("/api/v1/transactions", transactionRoutes.getRouter());
+app.use("/api/v1/auth", authRoutes.getRouter());
+app.use("/api/v1/users", userRoutes.getRouter());
+app.use("/api/v1/promotions", promotionRoutes.getRouter());
+app.use("/api/v1/referrals", referralRoutes.getRouter());
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

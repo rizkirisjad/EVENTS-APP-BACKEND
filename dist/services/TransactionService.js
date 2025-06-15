@@ -18,70 +18,55 @@ class TransactionService {
     createTransaction(input) {
         return __awaiter(this, void 0, void 0, function* () {
             const { eventId, ticketTypeId, userEmail, quantity, promoCode, referralCode, } = input;
-            return yield prisma_1.default.$transaction((tx) => __awaiter(this, void 0, void 0, function* () {
-                const event = yield tx.event.findUnique({ where: { id: eventId } });
-                if (!event)
-                    throw new Error("Event not found");
-                if (event.availableSeats < quantity) {
-                    throw new Error("Not enough seats available");
+            // --- STEP 1: Pre-validation & prepare data ---
+            const event = yield prisma_1.default.event.findUnique({ where: { id: eventId } });
+            if (!event)
+                throw new Error("Event not found");
+            if (event.availableSeats < quantity)
+                throw new Error("Not enough seats");
+            let unitPrice = event.price;
+            if (!event.isFree && ticketTypeId) {
+                const ticket = yield prisma_1.default.ticketType.findUnique({
+                    where: { id: ticketTypeId },
+                });
+                if (!ticket)
+                    throw new Error("Invalid ticket type");
+                unitPrice = ticket.price;
+            }
+            let total = unitPrice * quantity;
+            let promo = null;
+            if (promoCode) {
+                promo = yield prisma_1.default.promotion.findUnique({ where: { code: promoCode } });
+                if (!promo || new Date(promo.expiresAt) < new Date()) {
+                    throw new Error("Invalid or expired promo code");
                 }
-                let unitPrice = 0;
-                // Tentukan harga per tiket
-                if (!event.isFree) {
-                    if (ticketTypeId) {
-                        const ticket = yield tx.ticketType.findUnique({
-                            where: { id: ticketTypeId },
-                        });
-                        if (!ticket)
-                            throw new Error("Invalid ticket type");
-                        unitPrice = ticket.price;
-                    }
-                    else {
-                        unitPrice = event.price;
-                    }
+                if (promo.maxUsage && promo.currentUsage >= promo.maxUsage) {
+                    throw new Error("Promo usage limit reached");
                 }
-                let total = unitPrice * quantity;
-                // Cek promo
-                if (promoCode) {
-                    const promo = yield tx.promotion.findUnique({
-                        where: { code: promoCode },
-                    });
-                    if (!promo || new Date(promo.expiresAt) < new Date()) {
-                        throw new Error("Invalid or expired promo code");
-                    }
-                    if (promo.maxUsage && promo.currentUsage >= promo.maxUsage) {
-                        throw new Error("Promo usage limit reached");
-                    }
-                    // Hitung diskon
-                    if (promo.discountIDR) {
-                        total -= promo.discountIDR;
-                    }
-                    else if (promo.discountPct) {
-                        total -= Math.floor((promo.discountPct / 100) * total);
-                    }
-                    // Naikkan usage promo
-                    yield tx.promotion.update({
-                        where: { code: promoCode },
-                        data: { currentUsage: { increment: 1 } },
-                    });
+                // Apply discount
+                if (promo.discountIDR)
+                    total -= promo.discountIDR;
+                else if (promo.discountPct) {
+                    total -= Math.floor((promo.discountPct / 100) * total);
                 }
-                // Cek referral
-                if (referralCode) {
-                    const referrer = yield tx.user.findUnique({ where: { referralCode } });
-                    const referredUser = yield tx.user.findUnique({
-                        where: { email: userEmail },
-                    });
-                    if (referrer && referredUser) {
-                        yield tx.referralUsage.create({
-                            data: {
-                                referrerId: referrer.id,
-                                referredUserId: referredUser.id,
-                            },
-                        });
-                        // Diskon 10% untuk pengguna referral
-                        total -= Math.floor(total * 0.1);
-                    }
+            }
+            let referrerId = null;
+            let referredUserId = null;
+            if (referralCode) {
+                const referrer = yield prisma_1.default.user.findUnique({
+                    where: { referralCode },
+                });
+                const referred = yield prisma_1.default.user.findUnique({
+                    where: { email: userEmail },
+                });
+                if (referrer && referred) {
+                    referrerId = referrer.id;
+                    referredUserId = referred.id;
+                    total -= Math.floor(0.1 * total); // Apply referral discount
                 }
+            }
+            // --- STEP 2: Transaction ---
+            const result = yield prisma_1.default.$transaction((tx) => __awaiter(this, void 0, void 0, function* () {
                 const transaction = yield tx.transaction.create({
                     data: {
                         eventId,
@@ -93,18 +78,32 @@ class TransactionService {
                         referralCode,
                     },
                 });
-                // Update available seats
                 yield tx.event.update({
                     where: { id: eventId },
                     data: {
                         availableSeats: { decrement: quantity },
                     },
                 });
+                if (promo) {
+                    yield tx.promotion.update({
+                        where: { code: promoCode },
+                        data: { currentUsage: { increment: 1 } },
+                    });
+                }
+                if (referrerId && referredUserId) {
+                    yield tx.referralUsage.create({
+                        data: {
+                            referrerId,
+                            referredUserId,
+                        },
+                    });
+                }
                 return {
                     transactionId: transaction.id,
                     totalPaid: total,
                 };
             }));
+            return result;
         });
     }
 }
