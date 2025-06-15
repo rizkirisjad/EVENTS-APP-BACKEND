@@ -24,11 +24,13 @@ Backend system for an event management application that provides APIs for event 
 <td width="50%">
 
 ### 🔍 Event Search
+
 - Search by title, category, location
 - Flexible filtering and sorting
 - Pagination for optimal performance
 
 ### 🎫 Ticket Management
+
 - Multi-type ticket system
 - Automatic seat management
 - Promo & referral support
@@ -37,12 +39,14 @@ Backend system for an event management application that provides APIs for event 
 <td width="50%">
 
 ### 🔒 Security
+
 - Helmet protection
 - CORS enabled
 - Request logging with Morgan
 - Rate limiting
 
 ### 📊 Monitoring
+
 - Error tracking
 - Performance monitoring
 - Request logging
@@ -63,6 +67,7 @@ Backend system for an event management application that provides APIs for event 
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js (v16+)
 - PostgreSQL
 - npm or yarn
@@ -95,6 +100,7 @@ npm run dev
 ### Events
 
 #### GET /api/v1/events
+
 List events with filtering & pagination.
 
 **Query Parameters:**
@@ -107,6 +113,7 @@ List events with filtering & pagination.
 | limit | number | No | Items per page (default: 10) |
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -141,9 +148,11 @@ List events with filtering & pagination.
 ### Transactions
 
 #### POST /api/v1/transactions
+
 Create a ticket purchase transaction.
 
 **Request Body:**
+
 ```json
 {
   "eventId": "string",
@@ -210,12 +219,12 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle)
+Rizki C - [@twitter_handle](https://twitter.com/twitter_handle)
 
-Project Link: [https://github.com/username/events-app-backend](https://github.com/username/events-app-backend)
+Project Link: [https://github.com/rizkirisjad/EVENTS-APP-BACKEND](https://github.com/rizkirisjad/EVENTS-APP-BACKEND)
 
 ---
 
 <div align="center">
-Made with ❤️ by [Your Name]
-</div> 
+Made with ❤️ by Rizki C
+</div>
